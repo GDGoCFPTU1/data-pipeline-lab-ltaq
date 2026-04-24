@@ -4,17 +4,34 @@ import re
 # ROLE 2: ETL/ELT BUILDER
 # ==========================================
 
+def clean_pdf_text(raw_text: str) -> str:
+    # Remove noise like HEADER_PAGE_1 and FOOTER_PAGE_1
+    cleaned = re.sub(r'HEADER_PAGE_\d+', '', raw_text)
+    cleaned = re.sub(r'FOOTER_PAGE_\d+', '', cleaned)
+    return cleaned.strip()
+
 def process_pdf_data(raw_json: dict) -> dict:
     # Bước 1: Làm sạch nhiễu (Header/Footer) khỏi văn bản
-    raw_text = raw_json.get("extractedText", "")
-    # TODO: Dùng re.sub để xóa 'HEADER_PAGE_X' và 'FOOTER_PAGE_X'
-    cleaned_content = ""
+    content = raw_json.get("extractedText", "")
+    content = clean_pdf_text(content)
     
     # Bước 2: Map dữ liệu thô sang định dạng chuẩn của UnifiedDocument
-    # TODO: Trả về dictionary với các key: document_id, source_type, author, category, content, timestamp
-    return {}
+    return {
+        "document_id": raw_json.get("docId", "unknown_pdf"),
+        "source_type": "PDF",
+        "author": raw_json.get("authorName", "Unknown").strip(),
+        "category": raw_json.get("docCategory", "General"),
+        "content": content,
+        "timestamp": raw_json.get("createdAt", "N/A")
+    }
 
 def process_video_data(raw_json: dict) -> dict:
-    # TODO: Map dữ liệu thô từ Video sang định dạng chuẩn (giống PDF)
-    # Lưu ý các key của Video: video_id, creator_name, transcript, category, published_timestamp
-    return {}
+    # Map dữ liệu thô từ Video sang định dạng chuẩn (giống PDF)
+    return {
+        "document_id": raw_json.get("video_id", "unknown_vid"),
+        "source_type": "Video",
+        "author": raw_json.get("creator_name", "Unknown"),
+        "category": raw_json.get("category", "General"),
+        "content": raw_json.get("transcript", ""),
+        "timestamp": raw_json.get("published_timestamp", "N/A")
+    }
